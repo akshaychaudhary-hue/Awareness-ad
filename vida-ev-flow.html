@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Vida EV Flow — Instamart Rider</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  background: #e8edf2;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; min-height: 100vh; padding: 24px 0;
+}
+.app-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 2px;
+  text-transform: uppercase; color: #aaa; margin-bottom: 14px;
+}
+
+/* ── Phone ── */
+.phone {
+  width: 375px; height: 812px;
+  background: #f2f2f7;
+  border-radius: 44px;
+  box-shadow: 0 32px 100px rgba(0,0,0,0.22), 0 0 0 10px #1a1a1a, 0 0 0 12px #3a3a3a;
+  overflow: hidden; position: relative;
+}
+.phone-notch {
+  position: absolute; top:0; left:50%; transform:translateX(-50%);
+  width:120px; height:30px; background:#1a1a1a;
+  border-radius:0 0 20px 20px; z-index:200;
+}
+.screen-wrap { width:100%; height:100%; position:relative; overflow:hidden; }
+.screen {
+  position:absolute; top:0; left:0; width:100%; height:100%;
+  overflow-y:auto; overflow-x:hidden;
+  display:flex; flex-direction:column;
+  background:#f2f2f7;
+  transform:translateX(100%);
+  transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  will-change:transform;
+  -webkit-overflow-scrolling:touch;
+  padding-top:30px;
+}
+.screen.active { transform:translateX(0); }
+
+/* ── Status bar ── */
+.status-bar {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:6px 20px 4px; flex-shrink:0;
+  font-size:12px; font-weight:600; color:#1a1a1a;
+}
+.status-icons { display:flex; gap:5px; align-items:center; font-size:11px; }
+
+/* ── Top bar (matches real app) ── */
+.top-bar {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:8px 16px 10px; background:#fff; flex-shrink:0;
+  border-bottom:1px solid #f0f0f0;
+}
+.offline-toggle {
+  display:flex; align-items:center; gap:8px;
+  background:#f0f0f0; border-radius:24px; padding:6px 14px 6px 8px;
+  font-size:13px; font-weight:700; color:#1a1a1a;
+}
+.toggle-dot { width:22px; height:22px; border-radius:50%; background:#aaa; }
+.top-actions { display:flex; gap:8px; }
+.top-btn {
+  border:1.5px solid #ddd; border-radius:20px;
+  padding:6px 12px; font-size:11px; font-weight:700; color:#1a1a1a;
+  background:#fff; cursor:pointer; display:flex; align-items:center; gap:4px;
+}
+.top-btn.sos { border-color:#ff3b30; color:#ff3b30; }
+
+/* ── Announcement strip ── */
+.announcement {
+  background:#1a1a1a; color:#fff;
+  display:flex; align-items:center; gap:10px;
+  padding:10px 16px; flex-shrink:0;
+}
+.ann-icon { width:28px; height:28px; border-radius:50%; background:#f4a100; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+.ann-text { font-size:13px; font-weight:700; }
+.ann-sub { font-size:11px; opacity:.7; }
+
+/* ── Today's progress ── */
+.progress-card {
+  background:#fff; margin:10px 12px 0;
+  border-radius:14px; padding:14px 16px; flex-shrink:0;
+}
+.progress-label { font-size:10px; font-weight:700; color:#999; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px; }
+.progress-stats { display:flex; justify-content:space-around; }
+.pstat { text-align:center; }
+.pstat-val { font-size:20px; font-weight:800; color:#1a1a1a; }
+.pstat-lbl { font-size:10px; color:#999; margin-top:2px; display:flex; align-items:center; justify-content:center; gap:3px; }
+.pstat-div { width:1px; background:#f0f0f0; }
+
+/* ══════════════════════════
+   VIDA BANNER (animated)
+══════════════════════════ */
+@keyframes vidaFloat {
+  0%,100% { transform:translateY(0) rotate(-1deg); }
+  50%      { transform:translateY(-7px) rotate(1deg); }
+}
+@keyframes vidaGlow {
+  0%,100% { opacity:0.5; transform:scale(1); }
+  50%      { opacity:0.9; transform:scale(1.1); }
+}
+@keyframes roadScroll {
+  from { transform:translateX(0); }
+  to   { transform:translateX(-50%); }
+}
+@keyframes spark {
+  0%,100% { opacity:0; transform:scale(0) rotate(0deg); }
+  50%      { opacity:1; transform:scale(1) rotate(180deg); }
+}
+@keyframes savingsPop {
+  0%   { transform:scale(0.95); opacity:0; }
+  100% { transform:scale(1); opacity:1; }
+}
+@keyframes pulse {
+  0%,100% { box-shadow:0 0 0 0 rgba(244,81,30,0.4); }
+  50%      { box-shadow:0 0 0 8px rgba(244,81,30,0); }
+}
+@keyframes shimmer {
+  0%   { background-position:-200% center; }
+  100% { background-position:200% center; }
+}
+
+.vida-banner {
+  margin:12px 12px 0;
+  border-radius:20px;
+  background:linear-gradient(135deg, #0a0a0a 0%, #1c0800 35%, #2a0d00 65%, #3d1200 100%);
+  overflow:hidden; position:relative; cursor:pointer;
+  min-height:148px; flex-shrink:0;
+  transition:transform 0.12s;
+  touch-action:manipulation;
+  box-shadow:0 12px 40px rgba(244,81,30,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+  border:1px solid rgba(244,81,30,0.15);
+}
+.vida-banner:active { transform:scale(0.98); }
+
+/* Road at bottom */
+.vb-road {
+  position:absolute; bottom:0; left:0; right:0; height:24px;
+  background:#111; overflow:hidden;
+}
+.vb-road-line {
+  position:absolute; top:50%; transform:translateY(-50%);
+  height:2px; width:200%;
+  background:repeating-linear-gradient(to right, #f4511e 0, #f4511e 20px, transparent 20px, transparent 40px);
+  animation:roadScroll 0.5s linear infinite;
+}
+
+/* Glow halo */
+.vb-glow {
+  position:absolute; right:20px; top:50%; transform:translateY(-55%);
+  width:100px; height:100px; border-radius:50%;
+  background:radial-gradient(circle, rgba(244,81,30,0.5) 0%, transparent 70%);
+  animation:vidaGlow 2s ease-in-out infinite;
+}
+
+/* Scooter SVG */
+.vb-scooter {
+  position:absolute; right:6px; bottom:22px;
+  width:140px; height:90px;
+  animation:vidaFloat 2.5s ease-in-out infinite;
+  filter:drop-shadow(0 6px 20px rgba(244,81,30,0.6));
+}
+
+/* Sparkles */
+.vb-spark { position:absolute; font-size:12px; }
+.vb-spark:nth-child(1) { top:14px; right:88px; animation:spark 2s ease-in-out infinite 0s; }
+.vb-spark:nth-child(2) { top:30px; right:118px; animation:spark 2s ease-in-out infinite 0.7s; }
+.vb-spark:nth-child(3) { top:10px; right:54px; animation:spark 2s ease-in-out infinite 1.4s; }
+
+/* Speed lines */
+.vb-speed {
+  position:absolute; right:112px; bottom:52px;
+  display:flex; flex-direction:column; gap:5px;
+}
+.vb-speed-line {
+  height:2px; border-radius:2px;
+  background:linear-gradient(to left, rgba(244,81,30,0.8), transparent);
+  animation:roadScroll 0.35s linear infinite;
+}
+
+/* Text */
+.vb-content {
+  position:relative; z-index:10;
+  padding:16px 145px 38px 16px;
+  display:flex; flex-direction:column; align-items:flex-start;
+}
+.vb-headline-row {
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+}
+.vb-brand {
+  display:inline-flex; align-items:center; gap:6px;
+  margin-bottom:8px;
+}
+.vb-logo {
+  display:flex; align-items:center; gap:6px;
+}
+.vb-logo-svg { height:18px; width:auto; }
+.vb-powered { font-size:9px; color:rgba(255,255,255,0.4); font-weight:500; letter-spacing:0.5px; }
+.vb-headline { font-size:19px; font-weight:900; color:#fff; line-height:1.2; letter-spacing:-0.3px; }
+.vb-headline span { color:#f4511e; }
+.vb-saving {
+  display:inline-flex; align-items:center; gap:5px;
+  background:rgba(244,81,30,0.2); border:1px solid rgba(244,81,30,0.4);
+  border-radius:20px; padding:3px 9px;
+  font-size:10px; font-weight:700; color:#ff8c6a;
+  animation:savingsPop 0.5s ease-out both;
+  white-space:nowrap;
+}
+.vb-cta {
+  background:#f4511e; color:#fff;
+  font-size:11px; font-weight:800;
+  padding:7px 16px; border-radius:20px; border:none;
+  cursor:pointer; z-index:10; margin-top:10px;
+  animation:pulse 2s ease-in-out infinite;
+  touch-action:manipulation; display:inline-block;
+}
+
+/* ── Shortcuts grid ── */
+.shortcuts-label {
+  font-size:10px; font-weight:700; color:#999; letter-spacing:1px;
+  text-transform:uppercase; padding:14px 16px 8px; flex-shrink:0;
+}
+.shortcuts-grid {
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:10px; padding:0 12px; flex-shrink:0;
+}
+.shortcut-card {
+  background:#fff; border-radius:14px; padding:14px 14px 10px;
+  display:flex; flex-direction:column; cursor:pointer;
+  box-shadow:0 2px 8px rgba(0,0,0,0.05);
+  touch-action:manipulation; transition:transform 0.12s;
+  min-height:90px; justify-content:space-between;
+}
+.shortcut-card:active { transform:scale(0.97); }
+.shortcut-card.ev-card {
+  background:linear-gradient(135deg, #e8f5e9, #f0fff4);
+  border:1.5px solid #c8e6c9;
+}
+.sc-title { font-size:13px; font-weight:800; color:#1a1a1a; line-height:1.3; }
+.sc-sub { font-size:10px; color:#888; margin-top:2px; }
+.sc-footer { display:flex; justify-content:space-between; align-items:flex-end; margin-top:8px; }
+.sc-arrow {
+  width:28px; height:28px; border-radius:50%;
+  background:#1c67f6; display:flex; align-items:center; justify-content:center;
+  color:#fff; font-size:14px; flex-shrink:0;
+}
+.sc-arrow.green { background:#06c167; }
+.sc-img { font-size:32px; }
+
+/* ── Bottom nav (matches real app) ── */
+.bottom-nav {
+  margin-top:auto; background:#fff;
+  border-top:1px solid #f0f0f0;
+  display:flex; justify-content:space-around;
+  padding:8px 0 16px; flex-shrink:0;
+}
+.bn-item {
+  display:flex; flex-direction:column; align-items:center; gap:3px;
+  font-size:10px; color:#999; font-weight:500; cursor:pointer;
+  touch-action:manipulation;
+}
+.bn-item.active { color:#1c67f6; }
+.bn-icon { font-size:20px; }
+
+/* ══════════════════════════════════════
+   SCREEN 2 — EV AWARENESS + OWN/RENT
+══════════════════════════════════════ */
+.nav-bar {
+  display:flex; align-items:center; gap:12px;
+  padding:8px 16px 10px; background:#fff;
+  border-bottom:1px solid #f0f0f0; flex-shrink:0;
+}
+.nav-back {
+  width:34px; height:34px; border-radius:50%;
+  background:#f5f5f5; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; border:none; font-size:16px; flex-shrink:0;
+  touch-action:manipulation;
+}
+.nav-title { font-size:16px; font-weight:800; color:#1a1a1a; }
+
+/* Rider quality badge */
+.quality-banner {
+  margin:10px 12px 0;
+  border-radius:14px; padding:12px 16px;
+  display:flex; align-items:center; gap:12px;
+  flex-shrink:0;
+}
+.quality-banner.gold { background:linear-gradient(135deg, #fffbeb, #fef3c7); border:1.5px solid #fcd34d; }
+.quality-banner.silver { background:linear-gradient(135deg, #f8fafc, #f1f5f9); border:1.5px solid #cbd5e1; }
+.qb-badge {
+  font-size:28px; flex-shrink:0;
+}
+.qb-text {}
+.qb-title { font-size:13px; font-weight:800; color:#1a1a1a; }
+.qb-sub { font-size:11px; color:#888; margin-top:2px; }
+
+/* Savings hero card */
+.savings-card {
+  margin:10px 12px 0;
+  border-radius:18px;
+  background:linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%);
+  padding:20px 16px; position:relative; overflow:hidden;
+  flex-shrink:0;
+}
+.savings-card::after {
+  content:'⚡'; position:absolute; right:-10px; bottom:-10px;
+  font-size:100px; opacity:0.08;
+}
+.sc-eyebrow { font-size:10px; font-weight:700; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+.sc-big { font-size:28px; font-weight:900; color:#fff; line-height:1.1; }
+.sc-big span { color:#6ee7b7; }
+.sc-caption { font-size:11px; color:rgba(255,255,255,0.7); margin-top:6px; line-height:1.5; }
+
+/* Cost comparison */
+.cost-compare {
+  display:flex; gap:10px; margin-top:14px;
+}
+.cc-item {
+  flex:1; border-radius:12px; padding:10px 12px;
+  background:rgba(255,255,255,0.1);
+}
+.cc-label { font-size:9px; font-weight:700; color:rgba(255,255,255,0.6); text-transform:uppercase; letter-spacing:1px; }
+.cc-val { font-size:16px; font-weight:900; color:#fff; margin-top:3px; }
+.cc-sub { font-size:9px; color:rgba(255,255,255,0.5); margin-top:1px; }
+.cc-item.ev { background:rgba(110,231,183,0.2); border:1px solid rgba(110,231,183,0.3); }
+.cc-item.ev .cc-val { color:#6ee7b7; }
+.cc-vs { display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:rgba(255,255,255,0.4); }
+
+/* Own/Rent cards */
+.vehicle-section { padding:12px 12px 0; flex-shrink:0; }
+.vs-label { font-size:12px; font-weight:700; color:#999; margin-bottom:8px; }
+
+.own-card {
+  background:#fff; border-radius:18px; padding:16px;
+  margin-bottom:10px; position:relative; overflow:hidden;
+  box-shadow:0 4px 20px rgba(0,0,0,0.08);
+  cursor:pointer; touch-action:manipulation; transition:transform 0.12s;
+  border:2px solid transparent;
+}
+.own-card.recommended { border-color:#f4511e; }
+.own-card:active { transform:scale(0.99); }
+
+.vc-rec-badge {
+  position:absolute; top:12px; right:12px;
+  background:#f4511e; color:#fff;
+  font-size:9px; font-weight:800; letter-spacing:1px;
+  text-transform:uppercase; padding:3px 8px; border-radius:20px;
+}
+.vc-header { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.vc-icon {
+  width:44px; height:44px; border-radius:12px;
+  display:flex; align-items:center; justify-content:center; font-size:22px;
+  flex-shrink:0;
+}
+.vc-icon.own-icon { background:#fff5f2; }
+.vc-icon.rent-icon { background:#f0f8ff; }
+.vc-title { font-size:17px; font-weight:900; color:#1a1a1a; }
+.vc-price { font-size:12px; color:#888; margin-top:1px; }
+.vc-price span { font-weight:700; color:#1a1a1a; }
+
+/* Vida ad inside Own card */
+.vida-inside-ad {
+  border-radius:16px;
+  margin-bottom:12px; position:relative; overflow:hidden;
+  height:120px;
+  background:#f4511e;
+}
+/* Diagonal split — left side is photo, right is orange */
+.via-img {
+  position:absolute; left:0; top:0; bottom:0;
+  width:62%; object-fit:cover; object-position:left center;
+  display:block;
+}
+/* Diagonal mask on image edge */
+.via-diagonal {
+  position:absolute; top:0; left:0; width:100%; height:100%;
+  background:linear-gradient(105deg, transparent 52%, #f4511e 52%);
+  z-index:1;
+}
+/* City skyline silhouette */
+.via-city {
+  position:absolute; right:8px; bottom:0;
+  width:80px; height:50px; z-index:2; opacity:0.25;
+}
+.via-content {
+  position:absolute; right:0; top:0; bottom:0;
+  width:48%; z-index:3;
+  display:flex; flex-direction:column; justify-content:center;
+  padding:10px 12px 10px 6px;
+}
+.via-brand { display:flex; align-items:center; gap:4px; margin-bottom:4px; }
+.via-logo-svg { height:13px; width:auto; }
+.via-model { font-size:9px; color:rgba(255,255,255,0.6); letter-spacing:0.5px; }
+.via-headline { font-size:13px; font-weight:900; color:#fff; letter-spacing:-0.2px; line-height:1.2; }
+.via-sub { font-size:10px; color:rgba(255,255,255,0.8); margin-top:3px; font-weight:600; }
+
+.vc-perks { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+.vc-perk {
+  background:#f8f8f8; border-radius:20px;
+  padding:4px 10px; font-size:10px; font-weight:600; color:#555;
+  display:flex; align-items:center; gap:4px;
+}
+.vc-btn {
+  width:100%; padding:13px; border-radius:12px; border:none;
+  font-size:14px; font-weight:800; cursor:pointer;
+  touch-action:manipulation;
+}
+.own-btn { background:#f4511e; color:#fff; box-shadow:0 4px 16px rgba(244,81,30,0.35); }
+.rent-btn { background:#1c67f6; color:#fff; box-shadow:0 4px 16px rgba(28,103,246,0.25); }
+
+/* Locked card */
+.locked-card {
+  background:#fff; border-radius:18px; padding:16px;
+  margin-bottom:10px; opacity:0.6;
+  box-shadow:0 2px 8px rgba(0,0,0,0.05);
+  display:flex; align-items:center; gap:12px;
+}
+.lock-icon { font-size:28px; }
+.lock-text {}
+.lock-title { font-size:15px; font-weight:800; color:#1a1a1a; }
+.lock-sub { font-size:11px; color:#888; margin-top:3px; }
+.lock-progress {
+  height:4px; background:#f0f0f0; border-radius:2px; margin-top:8px;
+}
+.lock-bar { height:4px; background:#06c167; border-radius:2px; width:45%; }
+
+/* ══════════════════════════════
+   SCREEN 3 — CONFIRM (zero input)
+══════════════════════════════ */
+.confirm-hero {
+  background:linear-gradient(135deg, #f4511e 0%, #ff6b35 100%);
+  padding:20px 16px 24px; position:relative; overflow:hidden; flex-shrink:0;
+}
+.confirm-hero::after {
+  content:'⚡'; position:absolute; right:-10px; bottom:-15px;
+  font-size:100px; opacity:0.15;
+}
+.ch-chip {
+  background:rgba(255,255,255,0.2); color:#fff;
+  font-size:10px; font-weight:700; letter-spacing:1px;
+  text-transform:uppercase; padding:4px 12px; border-radius:20px;
+  display:inline-block; margin-bottom:8px;
+}
+.ch-title { font-size:22px; font-weight:900; color:#fff; line-height:1.2; }
+.ch-sub { font-size:12px; color:rgba(255,255,255,0.8); margin-top:6px; }
+
+/* Rider data card */
+.rider-data-card {
+  background:#fff; margin:12px 12px 0;
+  border-radius:18px; padding:16px;
+  box-shadow:0 4px 20px rgba(0,0,0,0.08);
+  flex-shrink:0;
+}
+.rdc-header { display:flex; align-items:center; gap:12px; padding-bottom:12px; border-bottom:1px solid #f5f5f5; margin-bottom:12px; }
+.rdc-avatar {
+  width:44px; height:44px; border-radius:50%;
+  background:linear-gradient(135deg, #f4511e, #ff8c6a);
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px; color:#fff; font-weight:900; flex-shrink:0;
+}
+.rdc-name { font-size:16px; font-weight:800; color:#1a1a1a; }
+.rdc-id { font-size:11px; color:#999; margin-top:1px; }
+.rdc-badge {
+  margin-left:auto;
+  background:#fffbeb; border:1.5px solid #fcd34d;
+  border-radius:20px; padding:4px 10px;
+  font-size:11px; font-weight:800; color:#92400e;
+}
+
+.rdc-stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; }
+.rdc-stat {
+  background:#f8f8f8; border-radius:12px; padding:10px 12px;
+}
+.rdc-stat-val { font-size:16px; font-weight:900; color:#1a1a1a; }
+.rdc-stat-lbl { font-size:10px; color:#999; margin-top:2px; }
+.rdc-stat.highlight { background:#fff5f2; }
+.rdc-stat.highlight .rdc-stat-val { color:#f4511e; }
+
+/* 2-tap selectors */
+.selector-section { padding:12px 12px 0; flex-shrink:0; }
+.sel-label { font-size:13px; font-weight:700; color:#1a1a1a; margin-bottom:8px; }
+.sel-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+.sel-opt {
+  border:1.5px solid #e8e8e8; border-radius:12px;
+  padding:10px 12px; display:flex; align-items:center; gap:8px;
+  cursor:pointer; font-size:12px; font-weight:600; color:#555;
+  transition:all 0.15s; touch-action:manipulation; background:#fff;
+}
+.sel-opt.selected { border-color:#f4511e; background:#fff5f2; color:#f4511e; }
+.sel-opt-icon { font-size:18px; }
+
+.confirm-btn {
+  margin:14px 12px 0;
+  width:calc(100% - 24px); padding:16px;
+  background:linear-gradient(135deg, #f4511e, #ff6b35);
+  color:#fff; font-size:16px; font-weight:900;
+  border:none; border-radius:16px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  box-shadow:0 8px 24px rgba(244,81,30,0.4);
+  touch-action:manipulation; flex-shrink:0;
+  animation:pulse 2.5s ease-in-out infinite;
+}
+.confirm-btn:active { transform:scale(0.98); }
+.confirm-note { font-size:11px; color:#bbb; text-align:center; margin:10px 0 20px; flex-shrink:0; }
+
+/* ── Success ── */
+.success-wrap {
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:40px 20px; text-align:center;
+}
+
+/* ── Scenario toggle (for demo) ── */
+.demo-toggle {
+  display:flex; gap:8px; margin-bottom:14px;
+}
+.demo-btn {
+  padding:6px 16px; border-radius:20px; border:none; cursor:pointer;
+  font-size:11px; font-weight:700; touch-action:manipulation;
+}
+.demo-btn.active { background:#1a1a1a; color:#fff; }
+.demo-btn.inactive { background:#e8e8e8; color:#666; }
+
+@media (max-width:430px) {
+  body { padding:0; background:#f2f2f7; justify-content:flex-start; }
+  .app-label, .demo-toggle { display:none; }
+  .phone { width:100vw; height:100dvh; border-radius:0; box-shadow:none; }
+  .phone-notch { display:none; }
+  .screen { padding-top:0; }
+  .status-bar { padding-top:14px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-label">Instamart Rider — Vida EV Flow</div>
+
+<!-- Scenario toggle (desktop only) -->
+<div class="demo-toggle" id="demoToggle">
+  <button class="demo-btn active" onclick="setScenario('gold')">🥇 Gold Rider (Own + Rent)</button>
+  <button class="demo-btn inactive" onclick="setScenario('bronze')">🥉 Bronze Rider (Rent only)</button>
+</div>
+
+<div class="phone">
+  <div class="phone-notch"></div>
+  <div class="screen-wrap">
+
+    <!-- ══ SCREEN 1: HOME ══ -->
+    <div class="screen active" id="s1">
+      <div class="status-bar">
+        <span>22:01</span>
+        <div class="status-icons"><span>📶</span><span>🔋</span></div>
+      </div>
+
+      <!-- Top bar -->
+      <div class="top-bar" style="background:#fff;">
+        <div class="offline-toggle">
+          <div class="toggle-dot"></div>
+          Offline
+        </div>
+        <div class="top-actions">
+          <div class="top-btn">🎧 HELP</div>
+          <div class="top-btn sos">SOS</div>
+        </div>
+      </div>
+
+      <!-- Announcement -->
+      <div class="announcement">
+        <div class="ann-icon">📈</div>
+        <div>
+          <div class="ann-text">₹30 extra per order!</div>
+          <div class="ann-sub">Whitefield | Instamart orders</div>
+        </div>
+      </div>
+
+      <!-- Today's progress -->
+      <div class="progress-card">
+        <div class="progress-label">Today's Progress</div>
+        <div class="progress-stats">
+          <div class="pstat">
+            <div class="pstat-val">₹842</div>
+            <div class="pstat-lbl">💰 Earnings</div>
+          </div>
+          <div class="pstat-div"></div>
+          <div class="pstat">
+            <div class="pstat-val">4h 20m</div>
+            <div class="pstat-lbl">🕐 Online time</div>
+          </div>
+          <div class="pstat-div"></div>
+          <div class="pstat">
+            <div class="pstat-val">14</div>
+            <div class="pstat-lbl">🛍️ Trips</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIDA BANNER -->
+      <div class="vida-banner" onclick="goTo(2)">
+        <div class="vb-glow"></div>
+        <span class="vb-spark">✦</span>
+        <span class="vb-spark">✦</span>
+        <span class="vb-spark">✦</span>
+        <div class="vb-speed">
+          <div class="vb-speed-line" style="width:50px"></div>
+          <div class="vb-speed-line" style="width:35px"></div>
+          <div class="vb-speed-line" style="width:60px"></div>
+        </div>
+        <!-- Vida V1 scooter SVG -->
+        <img class="vb-scooter" src="C:\Users\akshay.chaudhary\Downloads\vida image.jpg" style="object-fit:contain; width:140px; height:90px;">
+          <!-- Rear wheel -->
+          <circle cx="38" cy="76" r="18" fill="#1a1a1a" stroke="#333" stroke-width="2"/>
+          <circle cx="38" cy="76" r="12" fill="#222" stroke="#f4511e" stroke-width="1.5"/>
+          <circle cx="38" cy="76" r="4" fill="#f4511e"/>
+          <!-- Spokes -->
+          <line x1="38" y1="64" x2="38" y2="58" stroke="#444" stroke-width="1.5"/>
+          <line x1="38" y1="88" x2="38" y2="94" stroke="#444" stroke-width="1.5"/>
+          <line x1="26" y1="76" x2="20" y2="76" stroke="#444" stroke-width="1.5"/>
+          <line x1="50" y1="76" x2="56" y2="76" stroke="#444" stroke-width="1.5"/>
+          <!-- Front wheel -->
+          <circle cx="122" cy="76" r="18" fill="#1a1a1a" stroke="#333" stroke-width="2"/>
+          <circle cx="122" cy="76" r="12" fill="#222" stroke="#f4511e" stroke-width="1.5"/>
+          <circle cx="122" cy="76" r="4" fill="#f4511e"/>
+          <!-- Spokes front -->
+          <line x1="122" y1="64" x2="122" y2="58" stroke="#444" stroke-width="1.5"/>
+          <line x1="122" y1="88" x2="122" y2="94" stroke="#444" stroke-width="1.5"/>
+          <line x1="110" y1="76" x2="104" y2="76" stroke="#444" stroke-width="1.5"/>
+          <line x1="134" y1="76" x2="140" y2="76" stroke="#444" stroke-width="1.5"/>
+          <!-- Frame / body -->
+          <path d="M55 72 L38 72 L38 60 L55 55 L80 52 L100 50 L115 52 L122 60 L122 72 Z" fill="#f4511e"/>
+          <!-- Seat -->
+          <path d="M62 50 L100 48 L100 54 L62 56 Z" fill="#cc3010" rx="4"/>
+          <!-- Body lower -->
+          <path d="M42 60 L55 55 L80 52 L80 72 L42 72 Z" fill="#e03d10"/>
+          <!-- Front fairing -->
+          <path d="M100 50 L120 55 L122 65 L108 68 L100 50Z" fill="#f4511e"/>
+          <!-- Windshield -->
+          <path d="M104 52 L118 57 L116 64 L106 62 Z" fill="#aee4ff" fill-opacity="0.5" stroke="#88ccee" stroke-width="0.5"/>
+          <!-- Handlebar -->
+          <line x1="115" y1="48" x2="128" y2="44" stroke="#ccc" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="128" cy="44" r="3" fill="#888"/>
+          <!-- Headlight -->
+          <ellipse cx="126" cy="58" rx="5" ry="4" fill="#ffe066" opacity="0.9"/>
+          <ellipse cx="126" cy="58" rx="3" ry="2.5" fill="#fff" opacity="0.8"/>
+          <!-- Footrest -->
+          <rect x="50" y="70" width="28" height="5" rx="2.5" fill="#cc3010"/>
+          <!-- Exhaust / charging port -->
+          <rect x="43" y="65" width="8" height="3" rx="1.5" fill="#222"/>
+          <!-- Orange accent stripe -->
+          <path d="M62 56 L100 53 L100 56 L62 59 Z" fill="#ff7043" opacity="0.6"/>
+          <!-- VIDA text on body -->
+          <text x="68" y="67" font-family="Arial Black, sans-serif" font-size="8" font-weight="900" fill="white" letter-spacing="1" opacity="0.9">VIDA</text>
+          <!-- Lightning bolt badge -->
+          <circle cx="90" cy="56" r="6" fill="#1a1a1a" opacity="0.7"/>
+          <text x="87" y="60" font-size="8" fill="#f4511e">⚡</text>
+          <!-- Ground shadow -->
+          <ellipse cx="80" cy="95" rx="50" ry="4" fill="rgba(244,81,30,0.15)"/>
+        </svg>
+        <div class="vb-content">
+          <div class="vb-brand">
+            <div class="vb-logo">
+              <!-- Vida logo SVG inline -->
+              <svg class="vb-logo-svg" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- V mark -->
+                <path d="M4 4 L14 4 L18 20 L22 4 L32 4 L22 28 L14 28 Z" fill="#f4511e"/>
+                <!-- Diagonal slash -->
+                <line x1="8" y1="22" x2="20" y2="8" stroke="#f4511e" stroke-width="3" stroke-linecap="round"/>
+                <!-- VIDA text -->
+                <text x="36" y="24" font-family="Arial Black, Impact, sans-serif" font-size="20" font-weight="900" fill="#f4511e" letter-spacing="1">VIDA</text>
+              </svg>
+            </div>
+            <div class="vb-powered">Powered by Hero</div>
+          </div>
+          <div class="vb-headline-row">
+            <div class="vb-headline">Get Yourself an <span>EV Today</span></div>
+            <div class="vb-saving">⚡ Save ₹2,000/week</div>
+          </div>
+          <button class="vb-cta">Explore Now →</button>
+        </div>
+        <div class="vb-road"><div class="vb-road-line"></div></div>
+      </div>
+
+      <!-- Shortcuts -->
+      <div class="shortcuts-label">SHORTCUTS</div>
+      <div class="shortcuts-grid">
+        <div class="shortcut-card" onclick="goTo(2)">
+          <div class="sc-title">Rent Electric<br>Vehicle</div>
+          <div class="sc-footer">
+            <div class="sc-arrow green">→</div>
+            <div class="sc-img">🛵</div>
+          </div>
+        </div>
+        <div class="shortcut-card">
+          <div class="sc-title">Benefits –<br>Loans & more</div>
+          <div class="sc-footer">
+            <div class="sc-arrow">→</div>
+            <div class="sc-img">💰</div>
+          </div>
+        </div>
+        <div class="shortcut-card">
+          <div class="sc-title">Refer &<br>Earn</div>
+          <div class="sc-footer">
+            <div class="sc-arrow">→</div>
+            <div class="sc-img">🎁</div>
+          </div>
+        </div>
+        <div class="shortcut-card">
+          <div class="sc-title">Partner<br>Store</div>
+          <div class="sc-footer">
+            <div class="sc-arrow">→</div>
+            <div class="sc-img">🏪</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:12px; flex-shrink:0;"></div>
+
+      <!-- Bottom nav -->
+      <div class="bottom-nav">
+        <div class="bn-item active"><div class="bn-icon">🏠</div>Home</div>
+        <div class="bn-item"><div class="bn-icon">💰</div>Earnings</div>
+        <div class="bn-item"><div class="bn-icon">📅</div>My Shifts</div>
+        <div class="bn-item"><div class="bn-icon">👥</div>Refer</div>
+        <div class="bn-item"><div class="bn-icon">⋯</div>More</div>
+      </div>
+    </div>
+
+    <!-- ══ SCREEN 2: EV AWARENESS + OWN/RENT ══ -->
+    <div class="screen" id="s2">
+      <div class="status-bar">
+        <span>22:01</span>
+        <div class="status-icons"><span>📶</span><span>🔋</span></div>
+      </div>
+      <div class="nav-bar" style="background:#fff;">
+        <button class="nav-back" onclick="goTo(1)">←</button>
+        <div class="nav-title">Electric Vehicle</div>
+      </div>
+
+      <!-- Quality banner -->
+      <div class="quality-banner gold" id="qualityBanner">
+        <div class="qb-badge">🥇</div>
+        <div class="qb-text">
+          <div class="qb-title" id="qualityTitle">Gold Rider — You qualify for ownership!</div>
+          <div class="qb-sub" id="qualitySub">Active 14 weeks · ₹18,200/month avg</div>
+        </div>
+      </div>
+
+      <!-- Savings hero -->
+      <div class="savings-card">
+        <div class="sc-eyebrow">💡 Your EV Savings Estimate</div>
+        <div class="sc-big">Save <span>₹1 Lac</span><br>in a year</div>
+        <div class="sc-caption">Based on your 45 km/day avg. Switching to Vida EV cuts your fuel cost by 80%.</div>
+        <div class="cost-compare">
+          <div class="cc-item">
+            <div class="cc-label">⛽ Petrol Bike</div>
+            <div class="cc-val">₹4,500</div>
+            <div class="cc-sub">per month fuel cost</div>
+          </div>
+          <div class="cc-vs">vs</div>
+          <div class="cc-item ev">
+            <div class="cc-label">⚡ Vida EV</div>
+            <div class="cc-val">₹400</div>
+            <div class="cc-sub">per month charging</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Own / Rent cards -->
+      <div class="vehicle-section">
+        <div class="vs-label">Choose how you want it</div>
+
+        <!-- OWN IT (shown for Gold/Platinum) -->
+        <div class="own-card recommended" id="ownCard" onclick="goTo(3,'own')">
+          <div class="vc-rec-badge" id="recBadge">✦ Best for You</div>
+          <div class="vc-header">
+            <div class="vc-icon own-icon">🏠</div>
+            <div>
+              <div class="vc-title">Own It</div>
+              <div class="vc-price">EMI from <span>₹3,500/month</span></div>
+            </div>
+          </div>
+
+          <!-- Vida ad inside — diagonal press style -->
+          <div class="vida-inside-ad">
+            <img class="via-img" src="C:\Users\akshay.chaudhary\Downloads\Prod Context\image 2.png">
+            <div class="via-diagonal"></div>
+            <!-- City skyline SVG -->
+            <svg class="via-city" viewBox="0 0 80 50" fill="none">
+              <rect x="5" y="30" width="8" height="20" fill="#c03000" opacity="0.6"/>
+              <rect x="15" y="22" width="6" height="28" fill="#c03000" opacity="0.6"/>
+              <rect x="23" y="26" width="10" height="24" fill="#c03000" opacity="0.6"/>
+              <rect x="35" y="18" width="7" height="32" fill="#c03000" opacity="0.6"/>
+              <rect x="44" y="28" width="9" height="22" fill="#c03000" opacity="0.6"/>
+              <rect x="55" y="24" width="6" height="26" fill="#c03000" opacity="0.6"/>
+              <rect x="63" y="32" width="8" height="18" fill="#c03000" opacity="0.6"/>
+            </svg>
+            <div class="via-content">
+              <div class="via-brand">
+                <svg class="via-logo-svg" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4 4 L14 4 L18 20 L22 4 L32 4 L22 28 L14 28 Z" fill="#fff"/>
+                  <line x1="8" y1="22" x2="20" y2="8" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+                  <text x="36" y="24" font-family="Arial Black,Impact,sans-serif" font-size="20" font-weight="900" fill="#fff" letter-spacing="1">VIDA</text>
+                </svg>
+                <div class="via-model">V1 Electric</div>
+              </div>
+              <div class="via-headline">Own at<br>₹3,500/mo</div>
+              <div class="via-sub">Zero down · Instant approval</div>
+            </div>
+          </div>
+
+          <div class="vc-perks">
+            <div class="vc-perk">✅ Full ownership</div>
+            <div class="vc-perk">✅ 0% interest 6 months</div>
+            <div class="vc-perk">✅ No credit score needed</div>
+            <div class="vc-perk">✅ Save ₹1 lac/year</div>
+          </div>
+          <button class="vc-btn own-btn">Own a Vida EV →</button>
+        </div>
+
+        <!-- LOCKED card for bronze -->
+        <div class="locked-card" id="lockedOwnCard" style="display:none;">
+          <div class="lock-icon">🔒</div>
+          <div class="lock-text" style="flex:1;">
+            <div class="lock-title">Own It — Locked</div>
+            <div class="lock-sub">Deliver 6 more weeks to unlock ownership</div>
+            <div class="lock-progress"><div class="lock-bar"></div></div>
+          </div>
+        </div>
+
+        <!-- RENT IT -->
+        <div class="own-card" id="rentCard" onclick="goTo(3,'rent')">
+          <div class="vc-rec-badge" id="rentBadge" style="display:none; background:#1c67f6;">✦ Recommended</div>
+          <div class="vc-header">
+            <div class="vc-icon rent-icon">🔑</div>
+            <div>
+              <div class="vc-title">Rent It</div>
+              <div class="vc-price">From <span>₹125/day</span> · Fuel included</div>
+            </div>
+          </div>
+          <div class="vc-perks">
+            <div class="vc-perk">✅ No long term commitment</div>
+            <div class="vc-perk">✅ Service & insurance covered</div>
+            <div class="vc-perk">✅ Cancel anytime</div>
+            <div class="vc-perk">✅ Still save ₹2,000/month</div>
+          </div>
+          <button class="vc-btn rent-btn">Rent a Vida EV →</button>
+        </div>
+
+      </div>
+      <div style="height:20px; flex-shrink:0;"></div>
+    </div>
+
+    <!-- ══ SCREEN 3: CONFIRM ══ -->
+    <div class="screen" id="s3">
+      <div class="status-bar">
+        <span>22:01</span>
+        <div class="status-icons"><span>📶</span><span>🔋</span></div>
+      </div>
+      <div class="nav-bar" style="background:#fff;">
+        <button class="nav-back" onclick="goTo(2)">←</button>
+        <div class="nav-title" id="s3Title">Own a Vida EV</div>
+      </div>
+
+      <div class="confirm-hero">
+        <div class="ch-chip" id="s3Chip">🏠 Ownership Plan</div>
+        <div class="ch-title">You're one step away<br>from your EV!</div>
+        <div class="ch-sub">Our team will call you within 24 hours</div>
+      </div>
+
+      <!-- Pre-filled rider data -->
+      <div class="rider-data-card">
+        <div class="rdc-header">
+          <div class="rdc-avatar">RK</div>
+          <div>
+            <div class="rdc-name">Ravi Kumar</div>
+            <div class="rdc-id">DE ID: IM-48291 · Whitefield</div>
+          </div>
+          <div class="rdc-badge">🥇 Gold</div>
+        </div>
+        <div class="rdc-stats">
+          <div class="rdc-stat highlight">
+            <div class="rdc-stat-val">₹18,200</div>
+            <div class="rdc-stat-lbl">Monthly Earnings</div>
+          </div>
+          <div class="rdc-stat">
+            <div class="rdc-stat-val">14 weeks</div>
+            <div class="rdc-stat-lbl">Active on Swiggy</div>
+          </div>
+          <div class="rdc-stat">
+            <div class="rdc-stat-val">+91 98765 43210</div>
+            <div class="rdc-stat-lbl">Verified Phone</div>
+          </div>
+          <div class="rdc-stat">
+            <div class="rdc-stat-val">312 trips</div>
+            <div class="rdc-stat-lbl">Total Delivered</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2-tap selectors -->
+      <div class="selector-section">
+        <div class="sel-label">Preferred Vehicle</div>
+        <div class="sel-grid" id="vehicleSel">
+          <div class="sel-opt selected" onclick="selectOpt(this,'vehicleSel')"><div class="sel-opt-icon">🛵</div>Vida V1</div>
+          <div class="sel-opt" onclick="selectOpt(this,'vehicleSel')"><div class="sel-opt-icon">⚡</div>Other EV</div>
+        </div>
+        <div class="sel-label">Best Time to Call</div>
+        <div class="sel-grid" id="timeSel">
+          <div class="sel-opt selected" onclick="selectOpt(this,'timeSel')"><div class="sel-opt-icon">🌅</div>Morning</div>
+          <div class="sel-opt" onclick="selectOpt(this,'timeSel')"><div class="sel-opt-icon">🌆</div>Evening</div>
+        </div>
+      </div>
+
+      <button class="confirm-btn" onclick="showSuccess()">
+        ⚡ Confirm My Interest
+      </button>
+      <div class="confirm-note">Your verified data is shared with the Vida team. No forms needed.</div>
+    </div>
+
+    <!-- ══ SCREEN 4: SUCCESS ══ -->
+    <div class="screen" id="s4">
+      <div class="success-wrap">
+        <div style="font-size:72px; margin-bottom:16px;">⚡🎉</div>
+        <div style="font-size:22px; font-weight:900; color:#1a1a1a; margin-bottom:8px;">You're on the list!</div>
+        <div style="font-size:13px; color:#888; line-height:1.6; margin-bottom:24px;">Vida team will call you within 24 hours to get your EV sorted.</div>
+        <div style="background:#fff5f2; border:1.5px solid #fcd9cc; border-radius:16px; padding:16px 20px; width:100%; margin-bottom:10px; text-align:center;">
+          <div style="font-size:11px; color:#f4511e; font-weight:700;">Reference ID</div>
+          <div style="font-size:20px; font-weight:900; color:#1a1a1a; margin-top:4px;">#EV-2024-7829</div>
+        </div>
+        <div style="background:#f0fff4; border:1.5px solid #bbf7d0; border-radius:16px; padding:14px 20px; width:100%; margin-bottom:24px; text-align:center;">
+          <div style="font-size:11px; color:#06c167; font-weight:700; margin-bottom:6px;">Your Estimated Savings</div>
+          <div style="font-size:24px; font-weight:900; color:#065f46;">₹1,00,000</div>
+          <div style="font-size:11px; color:#888; margin-top:2px;">in your first year on a Vida EV</div>
+        </div>
+        <button onclick="goTo(1)" style="background:#1a1a1a;color:#fff;border:none;border-radius:16px;padding:14px;font-size:14px;font-weight:800;cursor:pointer;width:100%;touch-action:manipulation;">← Back to Home</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let current = 1;
+
+function goTo(n, mode) {
+  const prev = document.getElementById('s' + current);
+  const next = document.getElementById('s' + n);
+  const forward = n > current;
+
+  next.style.transition = 'none';
+  next.style.transform = forward ? 'translateX(100%)' : 'translateX(-30%)';
+  next.offsetHeight;
+
+  prev.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)';
+  prev.style.transform = forward ? 'translateX(-30%)' : 'translateX(100%)';
+
+  next.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)';
+  next.style.transform = 'translateX(0)';
+  next.classList.add('active');
+  next.scrollTop = 0;
+
+  setTimeout(() => {
+    prev.classList.remove('active');
+    prev.style.transform = '';
+    prev.style.transition = '';
+  }, 360);
+
+  current = n;
+
+  if (mode === 'own') {
+    document.getElementById('s3Title').textContent = 'Own a Vida EV';
+    document.getElementById('s3Chip').textContent = '🏠 Ownership Plan';
+  } else if (mode === 'rent') {
+    document.getElementById('s3Title').textContent = 'Rent a Vida EV';
+    document.getElementById('s3Chip').textContent = '🔑 Rental Plan';
+  }
+}
+
+function selectOpt(el, gridId) {
+  document.querySelectorAll('#' + gridId + ' .sel-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function setScenario(tier) {
+  const btns = document.querySelectorAll('.demo-btn');
+  btns.forEach(b => { b.classList.remove('active'); b.classList.add('inactive'); });
+  event.target.classList.add('active'); event.target.classList.remove('inactive');
+
+  const ownCard = document.getElementById('ownCard');
+  const lockedOwnCard = document.getElementById('lockedOwnCard');
+  const rentCard = document.getElementById('rentCard');
+  const rentBadge = document.getElementById('rentBadge');
+  const recBadge = document.getElementById('recBadge');
+  const qualityBanner = document.getElementById('qualityBanner');
+  const qualityTitle = document.getElementById('qualityTitle');
+  const qualitySub = document.getElementById('qualitySub');
+
+  if (tier === 'gold') {
+    ownCard.style.display = '';
+    lockedOwnCard.style.display = 'none';
+    rentCard.style.border = '2px solid transparent';
+    rentBadge.style.display = 'none';
+    recBadge.style.display = '';
+    ownCard.classList.add('recommended');
+    qualityBanner.className = 'quality-banner gold';
+    qualityTitle.textContent = 'Gold Rider — You qualify for ownership!';
+    qualitySub.textContent = 'Active 14 weeks · ₹18,200/month avg';
+  } else {
+    ownCard.style.display = 'none';
+    lockedOwnCard.style.display = 'flex';
+    rentCard.style.border = '2px solid #1c67f6';
+    rentBadge.style.display = '';
+    qualityBanner.className = 'quality-banner silver';
+    qualityTitle.textContent = 'Keep Going — Unlock ownership soon!';
+    qualitySub.textContent = 'Active 4 weeks · ₹9,400/month avg';
+  }
+}
+
+function showSuccess() { goTo(4); }
+</script>
+</body>
+</html>
